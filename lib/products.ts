@@ -107,7 +107,7 @@ export const products: Product[] = [
     sizes: ["G"],
     colors: ["#5b3c1d"],
     isNew: true,
-    stock: 1,
+    stock: 0,
   },
   {
     id: "10",
