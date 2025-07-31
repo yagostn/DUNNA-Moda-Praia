@@ -28,6 +28,7 @@ const COLOR_MAP: { [key: string]: string } = {
   "#0000FF": "Azul",
   "#F5F5DC": "Bege",    
   "#EA72BCFF": "Rosa Claro",
+  " #006400": "Verde Escuro",
 
 }
 
