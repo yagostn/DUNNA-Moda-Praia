@@ -28,7 +28,7 @@ const COLOR_MAP: { [key: string]: string } = {
   "#0000FF": "Azul",
   "#F5F5DC": "Bege",    
   "#EA72BCFF": "Rosa Claro",
-  " #006400": "Verde Escuro",
+  "#006400": "Verde Escuro",
 
 }
 
@@ -108,7 +108,7 @@ export function createWhatsAppLink(
 
   // Closing message
   message += `*Obrigado por escolher a Dunna Praia!* \n`
-  message += `Confirma o pedido? Estamos prontos para fazer seu verão ainda mais especial.`
+  message += `Confirma o pedido? Estamos prontos para fazer seu verão ainda mais especial.\n`
 
   // Encode message for URL
   const encodedMessage = encodeURIComponent(message)
