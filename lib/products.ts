@@ -383,7 +383,7 @@ export const products: Product[] = [
     sizes: ["U"],
     colors: ["#808080"],
     isNew: true,
-    stock: 1, 
+    stock: 0, 
     },
     {
     id: "33",
@@ -395,7 +395,7 @@ export const products: Product[] = [
     sizes: ["M"],
     colors: ["#000000"],
     isNew: true,
-    stock: 1, 
+    stock: 0, 
     },
     {
     id: "34",
