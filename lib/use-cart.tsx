@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CartItem } from "./types";
+import { products } from "./products";
 
 interface CartContextType {
   cart: CartItem[];
@@ -15,6 +16,7 @@ interface CartContextType {
   removeFromCart: (item: CartItem) => void;
   updateQuantity: (item: CartItem, quantity: number) => void;
   clearCart: () => void;
+  validateAndCleanCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -28,7 +30,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const storedCart = localStorage.getItem("cart");
     if (storedCart) {
       try {
-        setCart(JSON.parse(storedCart));
+        const parsedCart = JSON.parse(storedCart);
+        // Filtrar produtos que ainda têm estoque
+        const validCart = parsedCart.filter((item: CartItem) => {
+          const product = products.find(p => p.id === item.id);
+          return product && product.stock > 0;
+        });
+        setCart(validCart);
       } catch (error) {
         console.error("Failed to parse cart from localStorage:", error);
       }
@@ -44,6 +52,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cart, mounted]);
 
   const addToCart = (item: CartItem) => {
+    // Verificação de segurança: encontrar o produto e verificar estoque
+    const product = products.find(p => p.id === item.id);
+    if (!product || product.stock <= 0) {
+      console.warn("Tentativa de adicionar produto sem estoque ao carrinho:", item);
+      return;
+    }
+
     setCart((prevCart) => {
       // Check if item already exists in cart (with same id, size, and color)
       const existingItemIndex = prevCart.findIndex(
@@ -54,13 +69,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       );
 
       if (existingItemIndex !== -1) {
-        // If item exists, update quantity
+        // If item exists, update quantity but respect stock limit
         const updatedCart = [...prevCart];
-        updatedCart[existingItemIndex].quantity += item.quantity;
+        const newQuantity = Math.min(
+          updatedCart[existingItemIndex].quantity + item.quantity,
+          product.stock
+        );
+        updatedCart[existingItemIndex].quantity = newQuantity;
         return updatedCart;
       } else {
-        // If item doesn't exist, add it to cart
-        return [...prevCart, item];
+        // If item doesn't exist, add it to cart with quantity limited by stock
+        const limitedQuantity = Math.min(item.quantity, product.stock);
+        return [...prevCart, { ...item, quantity: limitedQuantity }];
       }
     });
   };
@@ -79,12 +99,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = (item: CartItem, quantity: number) => {
+    // Verificação de segurança: encontrar o produto e verificar estoque
+    const product = products.find(p => p.id === item.id);
+    if (!product) {
+      console.warn("Produto não encontrado:", item.id);
+      return;
+    }
+
+    // Limitar a quantidade pelo estoque disponível
+    const limitedQuantity = Math.min(Math.max(1, quantity), product.stock);
+
     setCart((prevCart) =>
       prevCart.map((cartItem) =>
         cartItem.id === item.id &&
         cartItem.size === item.size &&
         cartItem.color === item.color
-          ? { ...cartItem, quantity }
+          ? { ...cartItem, quantity: limitedQuantity }
           : cartItem
       )
     );
@@ -94,9 +124,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart([]);
   };
 
+  const validateAndCleanCart = () => {
+    setCart((prevCart) => {
+      const validCart = prevCart.filter((item) => {
+        const product = products.find(p => p.id === item.id);
+        return product && product.stock > 0;
+      });
+      return validCart;
+    });
+  };
+
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart }}
+      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, validateAndCleanCart }}
     >
       {children}
     </CartContext.Provider>

@@ -11,15 +11,34 @@ import { Label } from "@/components/ui/label"
 import { formatCurrency } from "@/lib/utils"
 import { Trash2, ShoppingBag, CreditCard, QrCode, Banknote } from "lucide-react"
 import { createWhatsAppLink } from "@/lib/whatsapp"
+import { products } from "@/lib/products"
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCart()
+  const { cart, removeFromCart, updateQuantity, clearCart, validateAndCleanCart } = useCart()
   const [mounted, setMounted] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao" | "debito" | "dinheiro" | null>(null)
+  const [removedItems, setRemovedItems] = useState<string[]>([])
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
+    // Verificar se há itens sem estoque no carrinho
+    const itemsWithoutStock = cart.filter(item => {
+      const product = products.find(p => p.id === item.id)
+      return !product || product.stock <= 0
+    })
+    
+    if (itemsWithoutStock.length > 0) {
+      setRemovedItems(itemsWithoutStock.map(item => item.name))
+      validateAndCleanCart()
+      // Limpar a notificação após 5 segundos
+      setTimeout(() => setRemovedItems([]), 5000)
+    }
+  }, [mounted, cart, validateAndCleanCart])
 
   if (!mounted) {
     return (
@@ -46,6 +65,19 @@ export default function CartPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-center sm:text-left">Seu Carrinho</h1>
+
+      {removedItems.length > 0 && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="text-yellow-800 font-medium">
+            Alguns itens foram removidos do seu carrinho pois estão esgotados:
+          </p>
+          <ul className="text-yellow-700 text-sm mt-2">
+            {removedItems.map((itemName, index) => (
+              <li key={index}>• {itemName}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {isEmpty ? (
         <div className="text-center py-16">

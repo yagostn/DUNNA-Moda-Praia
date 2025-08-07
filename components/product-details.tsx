@@ -25,8 +25,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
   const [quantity, setQuantity] = useState(1)
   const [addedToCart, setAddedToCart] = useState(false)
 
-  const isOutOfStock = product.stock === 0
-  const maxQuantity = product.stock
+  const isOutOfStock = product.stock <= 0
+  const maxQuantity = Math.max(0, product.stock)
 
   const handleAddToCart = () => {
     if (isOutOfStock) return
