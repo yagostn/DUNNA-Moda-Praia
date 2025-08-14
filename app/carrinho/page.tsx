@@ -18,6 +18,14 @@ export default function CartPage() {
   const [mounted, setMounted] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao" | "debito" | "dinheiro" | null>(null)
   const [removedItems, setRemovedItems] = useState<string[]>([])
+  const [deliveryType, setDeliveryType] = useState<"entrega" | "entregaInterior" | "retirada">("entrega")
+  const [address, setAddress] = useState({
+    rua: "",
+    numero: "",
+    bairro: "",
+    cidade: ""
+  })
+  const [interiorCity, setInteriorCity] = useState("")
 
   useEffect(() => {
     setMounted(true)
@@ -53,12 +61,27 @@ export default function CartPage() {
   const isEmpty = cart.length === 0
 
   const handleCheckout = () => {
+    if (!deliveryType) {
+      alert("Por favor, selecione Entrega (capital), Entrega (Interior) ou Retirada antes de finalizar a compra.")
+      return
+    }
+    if (deliveryType === "entrega") {
+      if (!address.rua || !address.numero || !address.bairro || !address.cidade) {
+        alert("Preencha todos os campos de endereço para entrega.")
+        return
+      }
+    }
+    if (deliveryType === "entregaInterior") {
+      if (!interiorCity) {
+        alert("Preencha o campo de cidade para entrega no interior.")
+        return
+      }
+    }
     if (!paymentMethod) {
       alert("Por favor, selecione um método de pagamento")
       return
     }
-
-    const whatsappLink = createWhatsAppLink(cart, paymentMethod)
+    const whatsappLink = createWhatsAppLink(cart, paymentMethod, undefined, undefined, deliveryType, address, interiorCity)
     window.open(whatsappLink, "_blank")
   }
 
@@ -188,6 +211,53 @@ export default function CartPage() {
                 </div>
 
                 <div className="mb-6">
+                  <h3 className="font-medium mb-3">Entrega ou Retirada</h3>
+                  <RadioGroup
+                    value={deliveryType}
+                    onValueChange={(value) => setDeliveryType(value as "entrega" | "entregaInterior" | "retirada")}
+                    className="mb-4"
+                  >
+                    <div className="flex items-center space-x-2 mb-2">
+                      <RadioGroupItem value="entrega" id="entrega" />
+                      <Label htmlFor="entrega" className="flex items-center cursor-pointer">Entrega (capital)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <RadioGroupItem value="entregaInterior" id="entregaInterior" />
+                      <Label htmlFor="entregaInterior" className="flex items-center cursor-pointer">Entrega (Interior)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <RadioGroupItem value="retirada" id="retirada" />
+                      <Label htmlFor="retirada" className="flex items-center cursor-pointer">Retirada</Label>
+                    </div>
+                  </RadioGroup>
+                  {deliveryType === "retirada" && (
+                    <div className="p-3 bg-gray-50 border rounded mb-4 text-sm">
+                      <strong>Endereço de Retirada:</strong><br />
+                      Rua Lions Club, 51 Ocean Residence<br />
+                        Atalaia, Aracaju, Sergipe 49037-420
+                    </div>
+                  )}
+                  {deliveryType === "entrega" && (
+                    <div className="p-3 bg-gray-50 border rounded mb-4 text-sm">
+                      <strong>Endereço para Entrega:</strong>
+                      <div className="grid grid-cols-1 gap-2 mt-2">
+                        <input type="text" className="border rounded px-2 py-1" placeholder="Rua" value={address.rua} onChange={e => setAddress(a => ({ ...a, rua: e.target.value }))} />
+                        <input type="text" className="border rounded px-2 py-1" placeholder="Número" value={address.numero} onChange={e => setAddress(a => ({ ...a, numero: e.target.value }))} />
+                        <input type="text" className="border rounded px-2 py-1" placeholder="Bairro" value={address.bairro} onChange={e => setAddress(a => ({ ...a, bairro: e.target.value }))} />
+                        <input type="text" className="border rounded px-2 py-1" placeholder="Cidade" value={address.cidade} onChange={e => setAddress(a => ({ ...a, cidade: e.target.value }))} />
+                      </div>
+                      <p className="text-xs mt-2 text-red-700 font-semibold"/>
+                    </div>
+                  )}
+                  {deliveryType === "entregaInterior" && (
+                    <div className="p-3 bg-gray-50 border rounded mb-4 text-sm">
+                      <strong>Entrega Interior:</strong>
+                      <div className="grid grid-cols-1 gap-2 mt-2">
+                        <input type="text" className="border rounded px-2 py-1" placeholder="Cidade" value={interiorCity} onChange={e => setInteriorCity(e.target.value)} />
+                      </div>
+                      <p className="text-xs mt-2 text-red-700 font-semibold">Entrega por conta do cliente!</p>
+                    </div>
+                  )}
                   <h3 className="font-medium mb-3">Método de Pagamento</h3>
                   <RadioGroup
                     value={paymentMethod || ""}
@@ -222,11 +292,11 @@ export default function CartPage() {
                       </Label>
                     </div>
                   </RadioGroup>
-                    {!paymentMethod && (
-                      <p className="text-xs mt-2" style={{ color: "#7B3F00" }}>
-                        Selecione um método de pagamento para continuar
-                      </p>
-                      )}
+                  {!paymentMethod && (
+                    <p className="text-xs mt-2" style={{ color: "#7B3F00" }}>
+                      Selecione um método de pagamento para continuar
+                    </p>
+                  )}
                 </div>
 
                 <Button

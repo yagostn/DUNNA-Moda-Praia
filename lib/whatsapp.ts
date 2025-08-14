@@ -29,20 +29,41 @@ const COLOR_MAP: { [key: string]: string } = {
   "#F5F5DC": "Bege",    
   "#EA72BCFF": "Rosa Claro",
   "#006400": "Verde Escuro",
+  "#993399": "Roxo"
 
 }
 
 // Function to convert hex color to readable name
 function getColorName(hexColor?: string): string {
   if (!hexColor) return ""
-  return COLOR_MAP[hexColor.toUpperCase()] || hexColor
+  
+  // Normalize the hex color format
+  let normalizedColor = hexColor.toUpperCase()
+  
+  // Remove any extra characters and ensure proper hex format
+  if (normalizedColor.startsWith("#")) {
+    normalizedColor = normalizedColor.substring(1)
+  }
+  
+  // Ensure it's exactly 6 characters (remove extra characters if any)
+  if (normalizedColor.length > 6) {
+    normalizedColor = normalizedColor.substring(0, 6)
+  }
+  
+  // Add back the # prefix
+  normalizedColor = "#" + normalizedColor
+  
+  return COLOR_MAP[normalizedColor] || hexColor
 }
 
 export function createWhatsAppLink(
   cart: CartItem[], 
   paymentMethod?: "pix" | "cartao" | "dinheiro" | "debito" | null,
   customerName?: string,
-  customerPhone?: string
+  customerPhone?: string,
+  deliveryType?: "entrega" | "entregaInterior" | "retirada",
+  address?: { rua: string; numero: string; bairro: string; cidade: string },
+  interiorCity?: string
 ): string {
   if (cart.length === 0) return ""
 
@@ -106,9 +127,38 @@ export function createWhatsAppLink(
     message += `*Método de Pagamento:* ${paymentMethodText}\n\n`
   }
 
+  // Delivery Information
+  if (deliveryType) {
+    message += `*Informações de Entrega/Retirada:*\n`
+    
+    switch (deliveryType) {
+      case "entrega":
+        message += `Tipo: Entrega (Capital)\n`
+        if (address) {
+          message += `Endereço: ${address.rua}, ${address.numero}\n`
+          message += `Bairro: ${address.bairro}\n`
+          message += `Cidade: ${address.cidade}\n`
+        }
+        break
+      case "entregaInterior":
+        message += `Tipo: Entrega (Interior)\n`
+        if (interiorCity) {
+          message += `Cidade: ${interiorCity}\n`
+        }
+        message += `*Obs: Frete por conta do cliente*\n`
+        break
+      case "retirada":
+        message += `Tipo: Retirada\n`
+        message += `Local: Rua Lions Club, 51 Ocean Residence\n`
+        message += `Endereço: Atalaia, Aracaju, Sergipe 49037-420\n`
+        break
+    }
+    message += `\n`
+  }
+
   // Closing message
   message += `*Obrigado por escolher a Dunna Praia!* \n`
-  message += `Confirma o pedido? Estamos prontos para fazer seu verão ainda mais especial.\n`
+  message += `Confirma o pedido? 💖\n`
 
   // Encode message for URL
   const encodedMessage = encodeURIComponent(message)
