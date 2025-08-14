@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
 import Image from "next/image"
 import styles from "./image-zoom.module.css"
 
@@ -11,10 +10,9 @@ interface ImageZoomProps {
   width?: number
   height?: number
   className?: string
-  zoomScale?: number
 }
 
-const ImageZoom: React.FC<ImageZoomProps> = ({ src, alt, width, height, className = "", zoomScale = 2 }) => {
+const ImageZoom: React.FC<ImageZoomProps> = ({ src, alt, width, height, className = "" }) => {
   // Removido efeito de zoom e eventos relacionados
 
   return (
